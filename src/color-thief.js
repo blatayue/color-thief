@@ -24,11 +24,36 @@
   It also simplifies some of the canvas context manipulation
   with a set of helper functions.
 */
-var CanvasImage = function (image) {
-    this.canvas  = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
 
-    document.body.appendChild(this.canvas);
+var iAmOnNode = false;
+var Canvas;
+var Image;
+var fs;
+if (!!process && process.execPath) {
+    iAmOnNode = true;
+}
+if (iAmOnNode) {
+    Canvas = require('canvas')
+    Image = Canvas.Image;
+    fs = require('fs')
+}
+var CanvasImage = function (image) {
+    var img;
+    if (iAmOnNode) {
+        this.canvas = new Canvas();
+        img = new Image
+        if (image instanceof Buffer) {
+            img.src = image;
+        } else {
+            img.src = fs.readFileSync(image)
+        }
+    } else {
+        this.canvas = document.createElement('canvas');
+        document.body.appendChild(this.canvas)
+        img = image;
+    }
+    
+    this.context = this.canvas.getContext('2d');
 
     this.width  = this.canvas.width  = image.width;
     this.height = this.canvas.height = image.height;
@@ -370,8 +395,8 @@ var MMCQ = (function() {
         },
         contains: function(pixel) {
             var vbox = this,
-                rval = pixel[0] >> rshift;
-                gval = pixel[1] >> rshift;
+                rval = pixel[0] >> rshift,
+                gval = pixel[1] >> rshift,
                 bval = pixel[2] >> rshift;
             return (rval >= vbox.r1 && rval <= vbox.r2 &&
                     gval >= vbox.g1 && gval <= vbox.g2 &&
@@ -655,3 +680,6 @@ var MMCQ = (function() {
         quantize: quantize
     };
 })();
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ColorThief
+}
